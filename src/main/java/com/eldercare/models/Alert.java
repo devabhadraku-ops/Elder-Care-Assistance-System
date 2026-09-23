@@ -155,6 +155,13 @@ public class Alert {
                 && severity != null && !severity.isEmpty();
     }
 
+    // Text shown/sent for this alert. Subclasses (SOSAlert, HealthAlert...)
+    // override this to give their own wording -> polymorphism.
+    public String getAlertMessage() {
+        return "[" + severity + "] " + alertType +
+                " alert for elderly #" + elderlyId + ": " + description;
+    }
+
     @Override
     public String toString() {
         return "Alert{" +
