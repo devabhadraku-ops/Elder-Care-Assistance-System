@@ -7,8 +7,26 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.eldercare.service.AlertService;
+import com.eldercare.service.CaregiverAssignmentService;
+import com.eldercare.models.Alert;
+import com.eldercare.models.CaregiverAssignment;
+import java.util.List;
 
 public class CaregiverDashboard extends Application {
+    private int currentCaregiver Id = 1; // Default - set from login
+    private ListView<String> alertsList;
+    private ListView<String> tasksList;
+    private HBox elderlyBox;
+
+    public CaregiverDashboard() {
+        this(1);
+    }
+
+    public CaregiverDashboard(int caregiverId) {
+        this.currentCaregiver Id = caregiverId;
+    }
+
     @Override
     public void start(Stage primaryStage) {
         Label titleLabel = new Label("ELDERCARE ASSISTANCE SYSTEM");
@@ -20,50 +38,22 @@ public class CaregiverDashboard extends Application {
         Label urgentAlertsTitle = new Label("Urgent Alerts");
         urgentAlertsTitle.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #FF0000;");
 
-        ListView<String> alertsList = new ListView<>();
-        alertsList.getItems().addAll(
-                "High blood pressure alert - Patient: John Smith",
-                "Medication overdue - Patient: Mary Johnson",
-                "Fall detected - Patient: Robert Brown"
-        );
+        alertsList = new ListView<>();
         alertsList.setStyle("-fx-font-size: 14; -fx-padding: 10; -fx-border-color: #FF0000; -fx-border-width: 2;");
         alertsList.setPrefHeight(150);
 
         Label pendingTasksTitle = new Label("Pending Tasks");
         pendingTasksTitle.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
-        ListView<String> tasksList = new ListView<>();
-        tasksList.getItems().addAll(
-                "Assist with medication - John Smith - 2:00 PM",
-                "Check vitals - Mary Johnson - 3:00 PM",
-                "Prepare meal - Robert Brown - 4:00 PM",
-                "Help with mobility - Sarah Davis - 5:00 PM"
-        );
+        tasksList = new ListView<>();
         tasksList.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         tasksList.setPrefHeight(200);
 
         Label assignedElderlyTitle = new Label("Assigned Elderly");
         assignedElderlyTitle.setStyle("-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
-        HBox elderlyBox = new HBox(15);
+        elderlyBox = new HBox(15);
         elderlyBox.setPadding(new Insets(10));
-
-        Button patient1Button = new Button("John Smith");
-        patient1Button.setStyle("-fx-font-size: 14; -fx-padding: 10;");
-        patient1Button.setPrefWidth(150);
-        patient1Button.setPrefHeight(60);
-
-        Button patient2Button = new Button("Mary Johnson");
-        patient2Button.setStyle("-fx-font-size: 14; -fx-padding: 10;");
-        patient2Button.setPrefWidth(150);
-        patient2Button.setPrefHeight(60);
-
-        Button patient3Button = new Button("Robert Brown");
-        patient3Button.setStyle("-fx-font-size: 14; -fx-padding: 10;");
-        patient3Button.setPrefWidth(150);
-        patient3Button.setPrefHeight(60);
-
-        elderlyBox.getChildren().addAll(patient1Button, patient2Button, patient3Button);
 
         HBox actionButtonsBox = new HBox(15);
         actionButtonsBox.setPadding(new Insets(15));
@@ -72,7 +62,22 @@ public class CaregiverDashboard extends Application {
         completeTaskButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         completeTaskButton.setPrefWidth(150);
         completeTaskButton.setPrefHeight(50);
-        completeTaskButton.setOnAction(e -> System.out.println("Task marked complete"));
+        completeTaskButton.setOnAction(e -> {
+            String selected = tasksList.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                showAlert("Please select a task");
+                return;
+            }
+
+            try {
+                tasksList.getItems().remove(selected);
+                System.out.println("✓ Task marked complete");
+                showSuccess("Task marked complete!");
+            } catch (Exception ex) {
+                System.out.println("❌ Error: " + ex.getMessage());
+                showError("Error: " + ex.getMessage());
+            }
+        });
 
         Button viewDetailsButton = new Button("View Details");
         viewDetailsButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
@@ -115,6 +120,83 @@ public class CaregiverDashboard extends Application {
         primaryStage.setTitle("Eldercare - Caregiver Dashboard");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        // LOAD DATA FROM DATABASE
+        loadData();
+    }
+
+    // LOAD ALERTS FROM DATABASE
+    private void loadAlerts() {
+        try {
+            AlertService service = new AlertService();
+            List<Alert> alerts = service.getUnacknowledgedAlerts();
+
+            alertsList.getItems().clear();
+            for (Alert alert : alerts) {
+                String text = alert.getAlertType() + " - " + alert.getDescription();
+                alertsList.getItems().add(text);
+            }
+
+            System.out.println("✓ Loaded " + alerts.size() + " alerts");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error loading alerts: " + e.getMessage());
+        }
+    }
+
+    // LOAD ASSIGNMENTS FROM DATABASE
+    private void loadAssignments() {
+        try {
+            CaregiverAssignmentService service = new CaregiverAssignmentService();
+            List<CaregiverAssignment> assignments = service.getAssignmentsByCaregiverId(currentCaregiver Id);
+
+            elderlyBox.getChildren().clear();
+            for (CaregiverAssignment assignment : assignments) {
+                Button patientButton = new Button("Elderly ID: " + assignment.getElderly_id());
+                patientButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
+                patientButton.setPrefWidth(150);
+                patientButton.setPrefHeight(60);
+                elderlyBox.getChildren().add(patientButton);
+            }
+
+            System.out.println("✓ Loaded " + assignments.size() + " assignments");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error loading assignments: " + e.getMessage());
+        }
+    }
+
+    // LOAD ALL DATA
+    private void loadData() {
+        loadAlerts();
+        loadAssignments();
+    }
+
+    // HELPER - Show Alert
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Alert");
+        alert.setHeaderText("Attention");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Success
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("Done");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Error
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {

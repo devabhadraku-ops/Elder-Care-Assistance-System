@@ -7,8 +7,26 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.eldercare.service.ReminderService;
+import com.eldercare.models.ActivityReminder;
 
 public class AddEditReminder extends Application {
+    private int currentElderly_id = 1; // Default - set from login
+    private ComboBox<String> typeCombo;
+    private TextField timeField;
+    private CheckBox dailyCheck;
+    private CheckBox weekdaysCheck;
+    private CheckBox weekendCheck;
+    private TextArea descriptionArea;
+
+    public AddEditReminder() {
+        this(1);
+    }
+
+    public AddEditReminder(int elderlyId) {
+        this.currentElderly_id = elderlyId;
+    }
+
     @Override
     public void start(Stage primaryStage) {
         Label titleLabel = new Label("ELDERCARE ASSISTANCE SYSTEM");
@@ -19,7 +37,7 @@ public class AddEditReminder extends Application {
 
         Label typeLabel = new Label("Activity Type:");
         typeLabel.setStyle("-fx-font-size: 14;");
-        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo = new ComboBox<>();
         typeCombo.getItems().addAll("Medication", "Meal", "Exercise", "Doctor Appointment", "Other");
         typeCombo.setValue("Medication");
         typeCombo.setPrefWidth(300);
@@ -30,7 +48,7 @@ public class AddEditReminder extends Application {
 
         Label timeLabel = new Label("Time:");
         timeLabel.setStyle("-fx-font-size: 14;");
-        TextField timeField = new TextField();
+        timeField = new TextField();
         timeField.setPromptText("HH:MM");
         timeField.setPrefWidth(300);
         timeField.setStyle("-fx-font-size: 14; -fx-padding: 10;");
@@ -42,11 +60,11 @@ public class AddEditReminder extends Application {
         Label frequencyLabel = new Label("Frequency:");
         frequencyLabel.setStyle("-fx-font-size: 14;");
 
-        CheckBox dailyCheck = new CheckBox("Daily");
+        dailyCheck = new CheckBox("Daily");
         dailyCheck.setStyle("-fx-font-size: 14;");
-        CheckBox weekdaysCheck = new CheckBox("Weekdays");
+        weekdaysCheck = new CheckBox("Weekdays");
         weekdaysCheck.setStyle("-fx-font-size: 14;");
-        CheckBox weekendCheck = new CheckBox("Weekend");
+        weekendCheck = new CheckBox("Weekend");
         weekendCheck.setStyle("-fx-font-size: 14;");
 
         HBox frequencyBox = new HBox(15);
@@ -55,7 +73,7 @@ public class AddEditReminder extends Application {
 
         Label descriptionLabel = new Label("Description:");
         descriptionLabel.setStyle("-fx-font-size: 14;");
-        TextArea descriptionArea = new TextArea();
+        descriptionArea = new TextArea();
         descriptionArea.setPromptText("Enter reminder details");
         descriptionArea.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         descriptionArea.setPrefHeight(150);
@@ -72,7 +90,7 @@ public class AddEditReminder extends Application {
         saveButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         saveButton.setPrefWidth(150);
         saveButton.setPrefHeight(50);
-        saveButton.setOnAction(e -> System.out.println("Reminder saved"));
+        saveButton.setOnAction(e -> saveReminder());
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
@@ -105,6 +123,83 @@ public class AddEditReminder extends Application {
         primaryStage.setTitle("Eldercare - Add/Edit Reminder");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    // SAVE REMINDER TO DATABASE
+    private void saveReminder() {
+        try {
+            // Validate inputs
+            if (timeField.getText().isEmpty()) {
+                showAlert("Please enter a time");
+                return;
+            }
+
+            String activityType = typeCombo.getValue();
+            String reminderTime = timeField.getText();
+            String description = descriptionArea.getText();
+
+            // Build frequency string
+            String frequency = "";
+            if (dailyCheck.isSelected()) frequency += "Daily ";
+            if (weekdaysCheck.isSelected()) frequency += "Weekdays ";
+            if (weekendCheck.isSelected()) frequency += "Weekend";
+            if (frequency.isEmpty()) frequency = "Daily";
+
+            // CREATE REMINDER SERVICE AND SAVE
+            ReminderService service = new ReminderService();
+            ActivityReminder reminder = service.createReminder(
+                    currentElderly_id,
+                    activityType,
+                    reminderTime,
+                    frequency,
+                    description
+            );
+
+            if (reminder != null) {
+                System.out.println("✓ Reminder saved with ID: " + reminder.getReminder_id());
+                showSuccess("Reminder saved successfully!");
+                // Clear form
+                typeCombo.setValue("Medication");
+                timeField.clear();
+                descriptionArea.clear();
+                dailyCheck.setSelected(false);
+                weekdaysCheck.setSelected(false);
+                weekendCheck.setSelected(false);
+            } else {
+                showError("Failed to save reminder");
+            }
+
+        } catch (Exception ex) {
+            System.out.println("❌ Error: " + ex.getMessage());
+            showError("Error saving reminder: " + ex.getMessage());
+        }
+    }
+
+    // HELPER - Show Alert
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Alert");
+        alert.setHeaderText("Attention");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Success
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("Done");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Error
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {

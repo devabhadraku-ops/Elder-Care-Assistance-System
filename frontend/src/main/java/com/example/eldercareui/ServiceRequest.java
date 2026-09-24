@@ -7,8 +7,25 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.eldercare.service.ServiceRequestService;
+import com.eldercare.models.ServiceRequest;
 
-public class ServiceRequest extends Application {
+public class ServiceRequestScreen extends Application {
+    private int currentElderly_id = 1; // Default - set from login
+    private ComboBox<String> serviceTypeCombo;
+    private RadioButton lowRadio;
+    private RadioButton mediumRadio;
+    private RadioButton highRadio;
+    private TextArea descriptionArea;
+
+    public ServiceRequestScreen() {
+        this(1);
+    }
+
+    public ServiceRequestScreen(int elderlyId) {
+        this.currentElderly_id = elderlyId;
+    }
+
     @Override
     public void start(Stage primaryStage) {
         Label titleLabel = new Label("ELDERCARE ASSISTANCE SYSTEM");
@@ -19,7 +36,7 @@ public class ServiceRequest extends Application {
 
         Label serviceTypeLabel = new Label("Service Type:");
         serviceTypeLabel.setStyle("-fx-font-size: 14;");
-        ComboBox<String> serviceTypeCombo = new ComboBox<>();
+        serviceTypeCombo = new ComboBox<>();
         serviceTypeCombo.getItems().addAll("Cleaning", "Cooking", "Transportation", "Medical Care", "Companionship", "Other");
         serviceTypeCombo.setValue("Cleaning");
         serviceTypeCombo.setPrefWidth(300);
@@ -31,11 +48,11 @@ public class ServiceRequest extends Application {
         Label urgencyLabel = new Label("Urgency:");
         urgencyLabel.setStyle("-fx-font-size: 14;");
 
-        RadioButton lowRadio = new RadioButton("Low");
+        lowRadio = new RadioButton("Low");
         lowRadio.setStyle("-fx-font-size: 14;");
-        RadioButton mediumRadio = new RadioButton("Medium");
+        mediumRadio = new RadioButton("Medium");
         mediumRadio.setStyle("-fx-font-size: 14;");
-        RadioButton highRadio = new RadioButton("High");
+        highRadio = new RadioButton("High");
         highRadio.setStyle("-fx-font-size: 14;");
 
         ToggleGroup urgencyGroup = new ToggleGroup();
@@ -50,7 +67,7 @@ public class ServiceRequest extends Application {
 
         Label descriptionLabel = new Label("Description:");
         descriptionLabel.setStyle("-fx-font-size: 14;");
-        TextArea descriptionArea = new TextArea();
+        descriptionArea = new TextArea();
         descriptionArea.setPromptText("Describe the service needed");
         descriptionArea.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         descriptionArea.setPrefHeight(150);
@@ -82,7 +99,7 @@ public class ServiceRequest extends Application {
         submitButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         submitButton.setPrefWidth(150);
         submitButton.setPrefHeight(50);
-        submitButton.setOnAction(e -> System.out.println("Service request submitted"));
+        submitButton.setOnAction(e -> submitRequest());
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
@@ -117,6 +134,77 @@ public class ServiceRequest extends Application {
         primaryStage.setTitle("Eldercare - Service Request");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    // SUBMIT SERVICE REQUEST TO DATABASE
+    private void submitRequest() {
+        try {
+            // Validate inputs
+            if (descriptionArea.getText().isEmpty()) {
+                showAlert("Please enter a description");
+                return;
+            }
+
+            String serviceType = serviceTypeCombo.getValue();
+            String description = descriptionArea.getText();
+
+            // Get urgency level
+            String urgency = "Medium"; // default
+            if (lowRadio.isSelected()) urgency = "Low";
+            else if (mediumRadio.isSelected()) urgency = "Medium";
+            else if (highRadio.isSelected()) urgency = "High";
+
+            // CREATE SERVICE REQUEST AND SAVE
+            ServiceRequestService service = new ServiceRequestService();
+            ServiceRequest request = service.createRequest(
+                    currentElderly_id,
+                    serviceType,
+                    urgency,
+                    description
+            );
+
+            if (request != null) {
+                System.out.println("✓ Service request saved with ID: " + request.getRequest_id());
+                showSuccess("Service request submitted successfully!");
+                // Clear form
+                serviceTypeCombo.setValue("Cleaning");
+                descriptionArea.clear();
+                mediumRadio.setSelected(true);
+            } else {
+                showError("Failed to submit service request");
+            }
+
+        } catch (Exception ex) {
+            System.out.println("❌ Error: " + ex.getMessage());
+            showError("Error submitting request: " + ex.getMessage());
+        }
+    }
+
+    // HELPER - Show Alert
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Alert");
+        alert.setHeaderText("Attention");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Success
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("Done");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // HELPER - Show Error
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {
