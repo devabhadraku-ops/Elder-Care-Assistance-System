@@ -17,16 +17,16 @@ import com.eldercare.models.Alert;
 import java.util.List;
 
 public class ElderlyDashboard extends Application {
-    private int currentElderly Id = 1; // Default elderly ID - will be set from login
+    private int currentElderly_id = 1;
     private ListView<String> remindersList;
     private ListView<String> alertsList;
 
     public ElderlyDashboard() {
-        this(1); // Default constructor
+        this(1);
     }
 
     public ElderlyDashboard(int elderlyId) {
-        this.currentElderly Id = elderlyId;
+        this.currentElderly_id = elderlyId;
     }
 
     @Override
@@ -47,11 +47,10 @@ public class ElderlyDashboard extends Application {
         sosButton.setPrefWidth(400);
         sosButton.setPrefHeight(80);
 
-        // SOS BUTTON - CONNECTED TO BACKEND
         sosButton.setOnAction(e -> {
             try {
                 EmergencyService service = new EmergencyService();
-                SOSAlert alert = service.triggerSOS(currentElderly Id, "Emergency button pressed");
+                SOSAlert alert = service.triggerSOS(currentElderly_id, "Emergency button pressed");
 
                 if (alert != null) {
                     System.out.println("✓ SOS alert created with ID: " + alert.getAlert_id());
@@ -142,15 +141,13 @@ public class ElderlyDashboard extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // LOAD DATA FROM DATABASE
         loadData();
     }
 
-    // LOAD REMINDERS FROM DATABASE
     private void loadReminders() {
         try {
             ReminderService service = new ReminderService();
-            List<ActivityReminder> reminders = service.getRemindersByElderly Id(currentElderly Id);
+            List<ActivityReminder> reminders = service.getRemindersByElderly_id(currentElderly_id);
 
             remindersList.getItems().clear();
             for (ActivityReminder reminder : reminders) {
@@ -165,11 +162,10 @@ public class ElderlyDashboard extends Application {
         }
     }
 
-    // LOAD ALERTS FROM DATABASE
     private void loadAlerts() {
         try {
             AlertService service = new AlertService();
-            List<Alert> alerts = service.getAlertsByElderly Id(currentElderly Id);
+            List<Alert> alerts = service.getAlertsByElderly_id(currentElderly_id);
 
             alertsList.getItems().clear();
             for (Alert alert : alerts) {
@@ -184,7 +180,6 @@ public class ElderlyDashboard extends Application {
         }
     }
 
-    // LOAD ALL DATA
     private void loadData() {
         loadReminders();
         loadAlerts();

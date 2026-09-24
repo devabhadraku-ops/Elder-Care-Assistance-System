@@ -14,7 +14,7 @@ import com.eldercare.models.CaregiverAssignment;
 import java.util.List;
 
 public class CaregiverDashboard extends Application {
-    private int currentCaregiver Id = 1; // Default - set from login
+    private int currentCaregiver_id = 1;
     private ListView<String> alertsList;
     private ListView<String> tasksList;
     private HBox elderlyBox;
@@ -24,7 +24,7 @@ public class CaregiverDashboard extends Application {
     }
 
     public CaregiverDashboard(int caregiverId) {
-        this.currentCaregiver Id = caregiverId;
+        this.currentCaregiver_id = caregiverId;
     }
 
     @Override
@@ -121,11 +121,9 @@ public class CaregiverDashboard extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // LOAD DATA FROM DATABASE
         loadData();
     }
 
-    // LOAD ALERTS FROM DATABASE
     private void loadAlerts() {
         try {
             AlertService service = new AlertService();
@@ -144,11 +142,10 @@ public class CaregiverDashboard extends Application {
         }
     }
 
-    // LOAD ASSIGNMENTS FROM DATABASE
     private void loadAssignments() {
         try {
             CaregiverAssignmentService service = new CaregiverAssignmentService();
-            List<CaregiverAssignment> assignments = service.getAssignmentsByCaregiverId(currentCaregiver Id);
+            List<CaregiverAssignment> assignments = service.getAssignmentsByCaregiverId(currentCaregiver_id);
 
             elderlyBox.getChildren().clear();
             for (CaregiverAssignment assignment : assignments) {
@@ -166,13 +163,11 @@ public class CaregiverDashboard extends Application {
         }
     }
 
-    // LOAD ALL DATA
     private void loadData() {
         loadAlerts();
         loadAssignments();
     }
 
-    // HELPER - Show Alert
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Alert");
@@ -181,7 +176,6 @@ public class CaregiverDashboard extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Success
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -190,7 +184,6 @@ public class CaregiverDashboard extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Error
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");

@@ -12,146 +12,118 @@ import com.eldercare.models.ActivityReminder;
 import java.util.List;
 
 public class RemindersScreen extends Application {
-    private int currentElderly Id = 1; // Default - set from login
+    private int currentElderly_id = 1;
     private ListView<String> remindersList;
-    private List<ActivityReminder> remindersData; // Store reminder objects for mark complete
+    private List<ActivityReminder> remindersData;
 
     public RemindersScreen() {
         this(1);
     }
 
     public RemindersScreen(int elderlyId) {
-        this.currentElderly Id = elderlyId;
+        this.currentElderly_id = elderlyId;
     }
 
     @Override
     public void start(Stage primaryStage) {
-        VBox mainContainer = new VBox(20);
-        mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #f5f5f5;");
-
         Label titleLabel = new Label("ELDERCARE ASSISTANCE SYSTEM");
-        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
+        titleLabel.setStyle("-fx-font-size: 28; -fx-font-weight: bold;");
 
         Label screenTitle = new Label("Reminders");
-        screenTitle.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #333333;");
-
-        Label filterLabel = new Label("Filter:");
-        filterLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
-
-        ComboBox<String> filterCombo = new ComboBox<>();
-        filterCombo.getItems().addAll("All", "Completed", "Pending");
-        filterCombo.setValue("All");
-        filterCombo.setPrefWidth(180);
-        filterCombo.setStyle("-fx-font-size: 13;");
-
-        HBox filterBox = new HBox(15);
-        filterBox.setPadding(new Insets(10));
-        filterBox.getChildren().addAll(filterLabel, filterCombo);
+        screenTitle.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
 
         remindersList = new ListView<>();
-        remindersList.setStyle("-fx-font-size: 13; -fx-padding: 10;");
+        remindersList.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         remindersList.setPrefHeight(300);
 
-        HBox buttonsBox = new HBox(15);
-        buttonsBox.setPadding(new Insets(15));
+        HBox actionButtonsBox = new HBox(15);
+        actionButtonsBox.setPadding(new Insets(15));
 
-        Button completeButton = new Button("Mark Complete");
-        completeButton.setStyle("-fx-font-size: 13; -fx-padding: 10;");
-        completeButton.setPrefWidth(150);
-        completeButton.setPrefHeight(50);
-        completeButton.setOnAction(e -> {
-            String selected = remindersList.getSelectionModel().getSelectedItem();
-            if (selected == null) {
+        Button markCompleteButton = new Button("Mark Complete");
+        markCompleteButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
+        markCompleteButton.setPrefWidth(150);
+        markCompleteButton.setPrefHeight(50);
+        markCompleteButton.setOnAction(e -> {
+            int selectedIndex = remindersList.getSelectionModel().getSelectedIndex();
+            if (selectedIndex < 0) {
                 showAlert("Please select a reminder");
                 return;
             }
 
             try {
-                int selectedIndex = remindersList.getSelectionModel().getSelectedIndex();
-                if (selectedIndex >= 0 && selectedIndex < remindersData.size()) {
-                    ActivityReminder reminder = remindersData.get(selectedIndex);
-                    ReminderService service = new ReminderService();
-                    service.markComplete(reminder.getReminder_id());
+                ActivityReminder reminder = remindersData.get(selectedIndex);
+                ReminderService service = new ReminderService();
+                service.markComplete(reminder.getReminder_id());
 
-                    remindersList.getItems().remove(selected);
-                    System.out.println("✓ Reminder marked complete");
-                    showSuccess("Reminder marked complete!");
-                }
+                remindersList.getItems().remove(selectedIndex);
+                showSuccess("Reminder marked complete!");
+                System.out.println("✓ Reminder marked complete");
             } catch (Exception ex) {
                 System.out.println("❌ Error: " + ex.getMessage());
                 showError("Error: " + ex.getMessage());
             }
         });
 
-        Button snoozeButton = new Button("Snooze 30 Min");
-        snoozeButton.setStyle("-fx-font-size: 13; -fx-padding: 10;");
+        Button snoozeButton = new Button("Snooze 30 min");
+        snoozeButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         snoozeButton.setPrefWidth(150);
         snoozeButton.setPrefHeight(50);
         snoozeButton.setOnAction(e -> {
-            String selected = remindersList.getSelectionModel().getSelectedItem();
-            if (selected == null) {
+            int selectedIndex = remindersList.getSelectionModel().getSelectedIndex();
+            if (selectedIndex < 0) {
                 showAlert("Please select a reminder");
                 return;
             }
 
             try {
-                int selectedIndex = remindersList.getSelectionModel().getSelectedIndex();
-                if (selectedIndex >= 0 && selectedIndex < remindersData.size()) {
-                    ActivityReminder reminder = remindersData.get(selectedIndex);
-                    ReminderService service = new ReminderService();
-                    service.snoozeReminder(reminder.getReminder_id(), 30);
+                ActivityReminder reminder = remindersData.get(selectedIndex);
+                ReminderService service = new ReminderService();
+                service.snoozeReminder(reminder.getReminder_id(), 30);
 
-                    System.out.println("✓ Reminder snoozed for 30 minutes");
-                    showSuccess("Reminder snoozed for 30 minutes!");
-                }
+                showSuccess("Reminder snoozed for 30 minutes!");
+                System.out.println("✓ Reminder snoozed");
             } catch (Exception ex) {
                 System.out.println("❌ Error: " + ex.getMessage());
                 showError("Error: " + ex.getMessage());
             }
         });
 
-        Button addButton = new Button("Add New");
-        addButton.setStyle("-fx-font-size: 13; -fx-padding: 10;");
-        addButton.setPrefWidth(150);
-        addButton.setPrefHeight(50);
-        addButton.setOnAction(e -> System.out.println("Add reminder"));
-
         Button backButton = new Button("Back");
-        backButton.setStyle("-fx-font-size: 13; -fx-padding: 10;");
+        backButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
         backButton.setPrefWidth(150);
         backButton.setPrefHeight(50);
-        backButton.setOnAction(e -> System.out.println("Back to dashboard"));
+        backButton.setOnAction(e -> System.out.println("Going back"));
 
-        buttonsBox.getChildren().addAll(completeButton, snoozeButton, addButton, backButton);
+        actionButtonsBox.getChildren().addAll(markCompleteButton, snoozeButton, backButton);
 
-        mainContainer.getChildren().addAll(
+        VBox root = new VBox(20);
+        root.setPadding(new Insets(30));
+        root.setStyle("-fx-background-color: #f5f5f5;");
+        root.getChildren().addAll(
                 titleLabel,
+                new Separator(),
                 screenTitle,
                 new Separator(),
-                filterBox,
                 remindersList,
                 new Separator(),
-                buttonsBox
+                actionButtonsBox
         );
 
-        ScrollPane scrollPane = new ScrollPane(mainContainer);
+        ScrollPane scrollPane = new ScrollPane(root);
         scrollPane.setFitToWidth(true);
 
-        Scene scene = new Scene(scrollPane, 800, 700);
+        Scene scene = new Scene(scrollPane, 700, 800);
         primaryStage.setTitle("Eldercare - Reminders");
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // LOAD REMINDERS FROM DATABASE
         loadReminders();
     }
 
-    // LOAD REMINDERS FROM DATABASE
     private void loadReminders() {
         try {
             ReminderService service = new ReminderService();
-            remindersData = service.getRemindersByElderly Id(currentElderly Id);
+            remindersData = service.getRemindersByElderly_id(currentElderly_id);
 
             remindersList.getItems().clear();
             for (ActivityReminder reminder : remindersData) {
@@ -166,7 +138,6 @@ public class RemindersScreen extends Application {
         }
     }
 
-    // HELPER - Show Alert
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Alert");
@@ -175,7 +146,6 @@ public class RemindersScreen extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Success
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -184,7 +154,6 @@ public class RemindersScreen extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Error
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
