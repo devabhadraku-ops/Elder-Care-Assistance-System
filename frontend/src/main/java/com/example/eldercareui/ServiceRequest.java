@@ -11,7 +11,7 @@ import com.eldercare.service.ServiceRequestService;
 import com.eldercare.models.ServiceRequest;
 
 public class ServiceRequestScreen extends Application {
-    private int currentElderly_id = 1; // Default - set from login
+    private int currentElderly_id = 1;
     private ComboBox<String> serviceTypeCombo;
     private RadioButton lowRadio;
     private RadioButton mediumRadio;
@@ -136,10 +136,8 @@ public class ServiceRequestScreen extends Application {
         primaryStage.show();
     }
 
-    // SUBMIT SERVICE REQUEST TO DATABASE
     private void submitRequest() {
         try {
-            // Validate inputs
             if (descriptionArea.getText().isEmpty()) {
                 showAlert("Please enter a description");
                 return;
@@ -148,25 +146,23 @@ public class ServiceRequestScreen extends Application {
             String serviceType = serviceTypeCombo.getValue();
             String description = descriptionArea.getText();
 
-            // Get urgency level
-            String urgency = "Medium"; // default
+            String urgency = "Medium";
             if (lowRadio.isSelected()) urgency = "Low";
             else if (mediumRadio.isSelected()) urgency = "Medium";
             else if (highRadio.isSelected()) urgency = "High";
 
-            // CREATE SERVICE REQUEST AND SAVE
-            ServiceRequestService service = new ServiceRequestService();
-            ServiceRequest request = service.createRequest(
-                    currentElderly_id,
-                    serviceType,
-                    urgency,
-                    description
-            );
+            ServiceRequest request = new ServiceRequest();
+            request.setElderly_id(currentElderly_id);
+            request.setService_type(serviceType);
+            request.setUrgency(urgency);
+            request.setDescription(description);
 
-            if (request != null) {
-                System.out.println("✓ Service request saved with ID: " + request.getRequest_id());
+            ServiceRequestService service = new ServiceRequestService();
+            boolean success = service.addRequest(request);
+
+            if (success) {
+                System.out.println("✓ Service request saved");
                 showSuccess("Service request submitted successfully!");
-                // Clear form
                 serviceTypeCombo.setValue("Cleaning");
                 descriptionArea.clear();
                 mediumRadio.setSelected(true);
@@ -180,7 +176,6 @@ public class ServiceRequestScreen extends Application {
         }
     }
 
-    // HELPER - Show Alert
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Alert");
@@ -189,7 +184,6 @@ public class ServiceRequestScreen extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Success
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -198,7 +192,6 @@ public class ServiceRequestScreen extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Error
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");

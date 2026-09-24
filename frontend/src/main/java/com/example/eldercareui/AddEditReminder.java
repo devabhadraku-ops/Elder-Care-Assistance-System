@@ -11,7 +11,7 @@ import com.eldercare.service.ReminderService;
 import com.eldercare.models.ActivityReminder;
 
 public class AddEditReminder extends Application {
-    private int currentElderly_id = 1; // Default - set from login
+    private int currentElderly_id = 1;
     private ComboBox<String> typeCombo;
     private TextField timeField;
     private CheckBox dailyCheck;
@@ -125,10 +125,8 @@ public class AddEditReminder extends Application {
         primaryStage.show();
     }
 
-    // SAVE REMINDER TO DATABASE
     private void saveReminder() {
         try {
-            // Validate inputs
             if (timeField.getText().isEmpty()) {
                 showAlert("Please enter a time");
                 return;
@@ -138,27 +136,25 @@ public class AddEditReminder extends Application {
             String reminderTime = timeField.getText();
             String description = descriptionArea.getText();
 
-            // Build frequency string
             String frequency = "";
             if (dailyCheck.isSelected()) frequency += "Daily ";
             if (weekdaysCheck.isSelected()) frequency += "Weekdays ";
             if (weekendCheck.isSelected()) frequency += "Weekend";
             if (frequency.isEmpty()) frequency = "Daily";
 
-            // CREATE REMINDER SERVICE AND SAVE
-            ReminderService service = new ReminderService();
-            ActivityReminder reminder = service.createReminder(
-                    currentElderly_id,
-                    activityType,
-                    reminderTime,
-                    frequency,
-                    description
-            );
+            ActivityReminder reminder = new ActivityReminder();
+            reminder.setElderly_id(currentElderly_id);
+            reminder.setActivityType(activityType);
+            reminder.setReminderTime(reminderTime);
+            reminder.setFrequency(frequency);
+            reminder.setDescription(description);
 
-            if (reminder != null) {
-                System.out.println("✓ Reminder saved with ID: " + reminder.getReminder_id());
+            ReminderService service = new ReminderService();
+            boolean success = service.addReminder(reminder);
+
+            if (success) {
+                System.out.println("✓ Reminder saved");
                 showSuccess("Reminder saved successfully!");
-                // Clear form
                 typeCombo.setValue("Medication");
                 timeField.clear();
                 descriptionArea.clear();
@@ -175,7 +171,6 @@ public class AddEditReminder extends Application {
         }
     }
 
-    // HELPER - Show Alert
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Alert");
@@ -184,7 +179,6 @@ public class AddEditReminder extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Success
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -193,7 +187,6 @@ public class AddEditReminder extends Application {
         alert.showAndWait();
     }
 
-    // HELPER - Show Error
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");

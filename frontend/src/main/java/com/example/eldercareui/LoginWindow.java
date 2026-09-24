@@ -8,8 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import com.eldercare.service.AuthService;
-import com.eldercare.models.Elderly;
-import com.eldercare.models.Caregiver;
+import com.eldercare.models.User;
 
 public class LoginWindow extends Application {
     @Override
@@ -24,23 +23,6 @@ public class LoginWindow extends Application {
 
         Label loginLabel = new Label("Login");
         loginLabel.setStyle("-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #333333;");
-
-        Label userTypeLabel = new Label("User Type:");
-        userTypeLabel.setStyle("-fx-font-size: 14;");
-
-        RadioButton elderlyRadio = new RadioButton("Elderly");
-        elderlyRadio.setStyle("-fx-font-size: 14;");
-        elderlyRadio.setSelected(true);
-
-        RadioButton caregiverRadio = new RadioButton("Caregiver");
-        caregiverRadio.setStyle("-fx-font-size: 14;");
-
-        ToggleGroup userTypeGroup = new ToggleGroup();
-        elderlyRadio.setToggleGroup(userTypeGroup);
-        caregiverRadio.setToggleGroup(userTypeGroup);
-
-        VBox userTypeBox = new VBox(10);
-        userTypeBox.getChildren().addAll(userTypeLabel, elderlyRadio, caregiverRadio);
 
         Label usernameLabel = new Label("Username:");
         usernameLabel.setStyle("-fx-font-size: 14;");
@@ -72,43 +54,33 @@ public class LoginWindow extends Application {
             }
 
             try {
-                boolean isElderly = elderlyRadio.isSelected();
+                AuthService authService = new AuthService();
+                User user = authService.login(username, password);
 
-                if (isElderly) {
-                    AuthService authService = new AuthService();
-                    Elderly elderly = authService.authenticateElderly(username, password);
+                if (user != null) {
+                    showSuccess("Welcome " + user.getUsername() + "!");
+                    System.out.println("✓ Login successful: " + user.getUsername() + " (ID: " + user.getUser_id() + ")");
 
-                    if (elderly != null) {
-                        showSuccess("Welcome " + elderly.getName() + "!");
-                        System.out.println("✓ Elderly login successful: " + elderly.getName() + " (ID: " + elderly.getElderly_id() + ")");
+                    int userId = user.getUser_id();
+                    String role = user.getRole();
 
-                        ElderlyDashboard dashboard = new ElderlyDashboard(elderly.getElderly_id());
+                    if ("elderly".equalsIgnoreCase(role)) {
+                        ElderlyDashboard dashboard = new ElderlyDashboard(userId);
                         Stage dashboardStage = new Stage();
                         dashboard.start(dashboardStage);
                         primaryStage.close();
-
+                    } else if ("caregiver".equalsIgnoreCase(role)) {
+                        CaregiverDashboard dashboard = new CaregiverDashboard(userId);
+                        Stage dashboardStage = new Stage();
+                        dashboard.start(dashboardStage);
+                        primaryStage.close();
                     } else {
-                        showError("Invalid username or password");
-                        System.out.println("❌ Elderly login failed");
+                        showError("Unknown user role");
                     }
 
                 } else {
-                    AuthService authService = new AuthService();
-                    Caregiver caregiver = authService.authenticateCaregiver(username, password);
-
-                    if (caregiver != null) {
-                        showSuccess("Welcome " + caregiver.getName() + "!");
-                        System.out.println("✓ Caregiver login successful: " + caregiver.getName() + " (ID: " + caregiver.getCaregiver_id() + ")");
-
-                        CaregiverDashboard dashboard = new CaregiverDashboard(caregiver.getCaregiver_id());
-                        Stage dashboardStage = new Stage();
-                        dashboard.start(dashboardStage);
-                        primaryStage.close();
-
-                    } else {
-                        showError("Invalid username or password");
-                        System.out.println("❌ Caregiver login failed");
-                    }
+                    showError("Invalid username or password");
+                    System.out.println("❌ Login failed");
                 }
 
             } catch (Exception ex) {
@@ -121,7 +93,6 @@ public class LoginWindow extends Application {
                 titleLabel,
                 new Separator(),
                 loginLabel,
-                userTypeBox,
                 new Separator(),
                 usernameLabel,
                 usernameField,

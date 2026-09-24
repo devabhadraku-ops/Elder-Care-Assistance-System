@@ -53,35 +53,15 @@ public class RemindersScreen extends Application {
             try {
                 ActivityReminder reminder = remindersData.get(selectedIndex);
                 ReminderService service = new ReminderService();
-                service.markComplete(reminder.getReminder_id());
+                boolean success = service.completeReminder(reminder.getReminder_id());
 
-                remindersList.getItems().remove(selectedIndex);
-                showSuccess("Reminder marked complete!");
-                System.out.println("✓ Reminder marked complete");
-            } catch (Exception ex) {
-                System.out.println("❌ Error: " + ex.getMessage());
-                showError("Error: " + ex.getMessage());
-            }
-        });
-
-        Button snoozeButton = new Button("Snooze 30 min");
-        snoozeButton.setStyle("-fx-font-size: 14; -fx-padding: 10;");
-        snoozeButton.setPrefWidth(150);
-        snoozeButton.setPrefHeight(50);
-        snoozeButton.setOnAction(e -> {
-            int selectedIndex = remindersList.getSelectionModel().getSelectedIndex();
-            if (selectedIndex < 0) {
-                showAlert("Please select a reminder");
-                return;
-            }
-
-            try {
-                ActivityReminder reminder = remindersData.get(selectedIndex);
-                ReminderService service = new ReminderService();
-                service.snoozeReminder(reminder.getReminder_id(), 30);
-
-                showSuccess("Reminder snoozed for 30 minutes!");
-                System.out.println("✓ Reminder snoozed");
+                if (success) {
+                    remindersList.getItems().remove(selectedIndex);
+                    showSuccess("Reminder marked complete!");
+                    System.out.println("✓ Reminder marked complete");
+                } else {
+                    showError("Failed to mark reminder complete");
+                }
             } catch (Exception ex) {
                 System.out.println("❌ Error: " + ex.getMessage());
                 showError("Error: " + ex.getMessage());
@@ -94,7 +74,7 @@ public class RemindersScreen extends Application {
         backButton.setPrefHeight(50);
         backButton.setOnAction(e -> System.out.println("Going back"));
 
-        actionButtonsBox.getChildren().addAll(markCompleteButton, snoozeButton, backButton);
+        actionButtonsBox.getChildren().addAll(markCompleteButton, backButton);
 
         VBox root = new VBox(20);
         root.setPadding(new Insets(30));
@@ -123,7 +103,7 @@ public class RemindersScreen extends Application {
     private void loadReminders() {
         try {
             ReminderService service = new ReminderService();
-            remindersData = service.getRemindersByElderly_id(currentElderly_id);
+            remindersData = service.getRemindersByElderlyId(currentElderly_id);
 
             remindersList.getItems().clear();
             for (ActivityReminder reminder : remindersData) {

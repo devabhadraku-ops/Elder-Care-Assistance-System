@@ -54,20 +54,11 @@ public class ElderlyDashboard extends Application {
 
                 if (alert != null) {
                     System.out.println("✓ SOS alert created with ID: " + alert.getAlert_id());
-
-                    Alert confirmAlert = new Alert(Alert.AlertType.INFORMATION);
-                    confirmAlert.setTitle("Emergency Alert");
-                    confirmAlert.setHeaderText("Alert Sent!");
-                    confirmAlert.setContentText("Emergency alert has been sent to all caregivers!");
-                    confirmAlert.showAndWait();
+                    showSuccess("Emergency alert has been sent to all caregivers!");
                 }
             } catch (Exception ex) {
                 System.out.println("❌ Error: " + ex.getMessage());
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("Could not send alert");
-                errorAlert.setContentText("Error: " + ex.getMessage());
-                errorAlert.showAndWait();
+                showError("Error: " + ex.getMessage());
             }
         });
 
@@ -147,7 +138,7 @@ public class ElderlyDashboard extends Application {
     private void loadReminders() {
         try {
             ReminderService service = new ReminderService();
-            List<ActivityReminder> reminders = service.getRemindersByElderly_id(currentElderly_id);
+            List<ActivityReminder> reminders = service.getRemindersByElderlyId(currentElderly_id);
 
             remindersList.getItems().clear();
             for (ActivityReminder reminder : reminders) {
@@ -165,7 +156,7 @@ public class ElderlyDashboard extends Application {
     private void loadAlerts() {
         try {
             AlertService service = new AlertService();
-            List<Alert> alerts = service.getAlertsByElderly_id(currentElderly_id);
+            List<Alert> alerts = service.getAlertsByElderlyId(currentElderly_id);
 
             alertsList.getItems().clear();
             for (Alert alert : alerts) {
@@ -183,6 +174,22 @@ public class ElderlyDashboard extends Application {
     private void loadData() {
         loadReminders();
         loadAlerts();
+    }
+
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("Done");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {
