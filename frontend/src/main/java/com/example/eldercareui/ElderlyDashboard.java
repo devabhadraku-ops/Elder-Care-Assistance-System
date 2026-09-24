@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import com.eldercare.service.EmergencyService;
+import com.eldercare.models.SOSAlert;
 
 public class ElderlyDashboard extends Application {
     @Override
@@ -27,7 +29,31 @@ public class ElderlyDashboard extends Application {
                 "-fx-background-color: #FF0000; -fx-text-fill: white;");
         sosButton.setPrefWidth(400);
         sosButton.setPrefHeight(80);
-        sosButton.setOnAction(e -> System.out.println("Emergency alert triggered"));
+
+        // SOS BUTTON - CONNECTED TO BACKEND
+        sosButton.setOnAction(e -> {
+            try {
+                EmergencyService service = new EmergencyService();
+                SOSAlert alert = service.triggerSOS(1, "Emergency button pressed");
+
+                if (alert != null) {
+                    System.out.println("✓ SOS alert created with ID: " + alert.getAlert_id());
+
+                    Alert confirmAlert = new Alert(Alert.AlertType.INFORMATION);
+                    confirmAlert.setTitle("Emergency Alert");
+                    confirmAlert.setHeaderText("Alert Sent!");
+                    confirmAlert.setContentText("Emergency alert has been sent to all caregivers!");
+                    confirmAlert.showAndWait();
+                }
+            } catch (Exception ex) {
+                System.out.println("❌ Error: " + ex.getMessage());
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Error");
+                errorAlert.setHeaderText("Could not send alert");
+                errorAlert.setContentText("Error: " + ex.getMessage());
+                errorAlert.showAndWait();
+            }
+        });
 
         HBox sosBox = new HBox();
         sosBox.setAlignment(Pos.CENTER);
